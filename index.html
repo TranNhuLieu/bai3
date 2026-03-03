@@ -1,0 +1,587 @@
+<!doctype html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="referrer" content="no-referrer" />
+  <meta name="description" content="Premium Products Dashboard - Quản lý sản phẩm hiện đại với giao diện dark mode cao cấp" />
+  <title>Products Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+  <div class="container-fluid py-4 px-4">
+    <!-- Header -->
+    <div class="dashboard-header mb-4 p-4 rounded-3">
+      <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+        <div>
+          <h1 class="mb-1 fw-bold">
+            <i class="bi bi-rocket-takeoff me-2"></i>Products Dashboard
+          </h1>
+          <p class="mb-0 small">
+            <i class="bi bi-stars me-1"></i>Quản lý sản phẩm từ Escuela JS Store
+          </p>
+        </div>
+        <div class="d-flex align-items-center gap-3">
+          <span class="badge fs-6 px-3 py-2" id="totalBadge">
+            <i class="bi bi-box-seam me-1"></i><span id="totalCount">0</span> sản phẩm
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="card shadow-sm border-0 mb-4">
+      <div class="card-body">
+        <div class="row g-3 align-items-end">
+          <!-- Search -->
+          <div class="col-md-5">
+            <label class="form-label fw-semibold small mb-1">
+              <i class="bi bi-search me-1"></i>Tìm kiếm sản phẩm
+            </label>
+            <div class="input-group">
+              <span class="input-group-text border-end-0">
+                <i class="bi bi-search"></i>
+              </span>
+              <input type="text" id="searchInput" class="form-control border-start-0 ps-0"
+                placeholder="Nhập tên sản phẩm..." autocomplete="off" />
+              <button class="btn btn-outline-secondary" id="clearSearch" title="Xóa tìm kiếm">
+                <i class="bi bi-x-lg"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Category Filter -->
+          <div class="col-md-3">
+            <label class="form-label fw-semibold small mb-1">
+              <i class="bi bi-funnel me-1"></i>Lọc theo danh mục
+            </label>
+            <select id="categoryFilter" class="form-select">
+              <option value="">-- Tất cả danh mục --</option>
+            </select>
+          </div>
+
+          <!-- Limit -->
+          <div class="col-md-2">
+            <label class="form-label fw-semibold small mb-1">
+              <i class="bi bi-grid-3x3-gap me-1"></i>Hiển thị
+            </label>
+            <select id="limitSelect" class="form-select">
+              <option value="5">5 sản phẩm</option>
+              <option value="10" selected>10 sản phẩm</option>
+              <option value="20">20 sản phẩm</option>
+            </select>
+          </div>
+
+          <!-- Result Count -->
+          <div class="col-md-2">
+            <div class="result-info w-100 p-2 rounded-2 text-center">
+              <div class="text-muted small"><i class="bi bi-funnel-fill me-1"></i>Kết quả</div>
+              <div class="fw-bold text-primary" id="filteredCount">0</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading Spinner -->
+    <div id="loadingSpinner" class="text-center py-5">
+      <div class="spinner-border" role="status" style="width: 3rem; height: 3rem">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+      <p class="mt-3">Đang tải dữ liệu sản phẩm...</p>
+    </div>
+
+    <!-- Error Alert -->
+    <div id="errorAlert" class="alert alert-danger d-none" role="alert">
+      <i class="bi bi-exclamation-triangle-fill me-2"></i>
+      <span id="errorMsg">Không thể tải dữ liệu.</span>
+    </div>
+
+    <!-- Table -->
+    <div id="tableWrapper" class="card shadow-sm border-0 d-none">
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0" id="productTable">
+            <thead>
+              <tr class="table-dark">
+                <th class="ps-3" style="width: 50px">#</th>
+                <th style="width: 80px">Ảnh</th>
+                <th class="sortable" id="sortTitle" style="min-width: 200px">
+                  <div class="d-flex align-items-center gap-2">
+                    Tên sản phẩm
+                    <span class="sort-icon" id="sortTitleIcon">
+                      <i class="bi bi-arrow-down-up"></i>
+                    </span>
+                  </div>
+                </th>
+                <th class="sortable" id="sortPrice" style="width: 130px">
+                  <div class="d-flex align-items-center gap-2">
+                    Giá
+                    <span class="sort-icon" id="sortPriceIcon">
+                      <i class="bi bi-arrow-down-up"></i>
+                    </span>
+                  </div>
+                </th>
+                <th style="width: 140px">Danh mục</th>
+                <th style="min-width: 180px" class="text-center">
+                  Mô tả
+                  <span class="badge bg-info ms-1" style="font-size: 10px">Hover</span>
+                </th>
+              </tr>
+            </thead>
+            <tbody id="productBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Pagination Footer -->
+      <div class="card-footer border-top">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+          <div class="text-muted small" id="paginationInfo">
+            Hiển thị 0 - 0 trong tổng số 0 kết quả
+          </div>
+          <nav aria-label="Phân trang sản phẩm">
+            <ul class="pagination pagination-sm mb-0" id="pagination"></ul>
+          </nav>
+        </div>
+      </div>
+    </div>
+
+    <!-- No Results -->
+    <div id="noResults" class="d-none text-center py-5">
+      <i class="bi bi-search display-1 text-muted opacity-50"></i>
+      <h5 class="mt-3 text-muted">Không tìm thấy sản phẩm nào</h5>
+      <p class="text-muted small">
+        Thử thay đổi từ khóa hoặc bộ lọc danh mục
+      </p>
+      <button class="btn btn-outline-primary btn-sm" onclick="resetFilters()">
+        <i class="bi bi-arrow-counterclockwise me-1"></i>Đặt lại bộ lọc
+      </button>
+    </div>
+  </div>
+
+  <!-- Tooltip Popover for Description (mobile fallback) -->
+  <div id="descTooltip" class="desc-tooltip d-none">
+    <div class="desc-tooltip-inner"></div>
+  </div>
+
+  <script>
+    // ==================== STATE ====================
+    const state = {
+      allProducts: [],
+      filteredProducts: [],
+      currentPage: 1,
+      limit: 10,
+      searchQuery: "",
+      categoryFilter: "",
+      sortField: null,
+      sortDir: null, // 'asc' | 'desc' | null
+    };
+
+    // ==================== FETCH ====================
+    async function fetchProducts() {
+      showLoading(true);
+      try {
+        const response = await fetch(
+          "https://api.escuelajs.co/api/v1/products?limit=200&offset=0",
+        );
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
+        state.allProducts = data;
+        populateCategoryFilter(data);
+        applyFilters();
+        document.getElementById("totalCount").textContent = data.length;
+      } catch (err) {
+        showError("Lỗi khi tải dữ liệu: " + err.message);
+      } finally {
+        showLoading(false);
+      }
+    }
+
+    // ==================== FILTER & SORT ====================
+    function applyFilters() {
+      let result = [...state.allProducts];
+
+      // Search by title
+      if (state.searchQuery) {
+        const q = state.searchQuery.toLowerCase();
+        result = result.filter((p) => p.title.toLowerCase().includes(q));
+      }
+
+      // Category filter
+      if (state.categoryFilter) {
+        result = result.filter(
+          (p) => p.category && String(p.category.id) === state.categoryFilter,
+        );
+      }
+
+      // Sort
+      if (state.sortField && state.sortDir) {
+        result.sort((a, b) => {
+          let valA =
+            state.sortField === "price" ? a.price : a.title.toLowerCase();
+          let valB =
+            state.sortField === "price" ? b.price : b.title.toLowerCase();
+          if (valA < valB) return state.sortDir === "asc" ? -1 : 1;
+          if (valA > valB) return state.sortDir === "asc" ? 1 : -1;
+          return 0;
+        });
+      }
+
+      state.filteredProducts = result;
+      state.currentPage = 1;
+      document.getElementById("filteredCount").textContent = result.length;
+      renderTable();
+      renderPagination();
+    }
+
+    // ==================== RENDER TABLE ====================
+    function renderTable() {
+      const tbody = document.getElementById("productBody");
+      const { filteredProducts, currentPage, limit } = state;
+      const start = (currentPage - 1) * limit;
+      const end = start + limit;
+      const pageData = filteredProducts.slice(start, end);
+
+      const tableWrapper = document.getElementById("tableWrapper");
+      const noResults = document.getElementById("noResults");
+
+      if (filteredProducts.length === 0) {
+        tableWrapper.classList.add("d-none");
+        noResults.classList.remove("d-none");
+        return;
+      }
+
+      tableWrapper.classList.remove("d-none");
+      noResults.classList.add("d-none");
+
+      tbody.innerHTML = "";
+      pageData.forEach((product, idx) => {
+        const globalIdx = start + idx + 1;
+        const img = getProductImage(product);
+        const category = product.category ? product.category.name : "N/A";
+        const description = product.description || "Không có mô tả";
+        const price = Number(product.price).toLocaleString("vi-VN") + " $";
+
+        const tr = document.createElement("tr");
+        tr.classList.add("product-row");
+        tr.dataset.description = description;
+        tr.innerHTML = `
+        <td class="ps-3 fw-semibold">${globalIdx}</td>
+        <td>
+          <img
+            src="${img}"
+            alt="${escapeHtml(product.title)}"
+            class="product-img rounded"
+            referrerpolicy="no-referrer"
+            crossorigin="anonymous"
+            loading="lazy"
+            onerror="this.onerror=null; this.referrerPolicy='no-referrer'; this.src='https://placehold.co/60x60/1a1a2e/7c3aed?text=No+Img'"
+          />
+        </td>
+        <td>
+          <div class="fw-semibold product-title">${escapeHtml(product.title)}</div>
+          <div class="text-muted small">ID: ${product.id}</div>
+        </td>
+        <td>
+          <span class="price-badge">${price}</span>
+        </td>
+        <td>
+          <span class="category-badge">
+            ${escapeHtml(category)}
+          </span>
+        </td>
+        <td class="text-center desc-cell">
+          <span class="desc-hint small">
+            <i class="bi bi-eye me-1"></i>Hover để xem
+          </span>
+          <div class="desc-content">
+            <div class="desc-text">${escapeHtml(description)}</div>
+          </div>
+        </td>
+      `;
+
+        tbody.appendChild(tr);
+      });
+
+      // Pagination info
+      const total = filteredProducts.length;
+      const showStart = total === 0 ? 0 : start + 1;
+      const showEnd = Math.min(end, total);
+      document.getElementById("paginationInfo").textContent =
+        `Hiển thị ${showStart} – ${showEnd} trong tổng số ${total} kết quả`;
+    }
+
+    // ==================== PAGINATION ====================
+    function renderPagination() {
+      const { filteredProducts, currentPage, limit } = state;
+      const total = filteredProducts.length;
+      const totalPages = Math.ceil(total / limit);
+      const ul = document.getElementById("pagination");
+      ul.innerHTML = "";
+
+      if (totalPages <= 1) return;
+
+      // Prev
+      const prevLi = document.createElement("li");
+      prevLi.className = `page-item ${currentPage === 1 ? "disabled" : ""}`;
+      prevLi.innerHTML = `<a class="page-link" href="#" aria-label="Trang trước"><i class="bi bi-chevron-left"></i></a>`;
+      prevLi.addEventListener("click", (e) => {
+        e.preventDefault();
+        if (currentPage > 1) goToPage(currentPage - 1);
+      });
+      ul.appendChild(prevLi);
+
+      // Pages (show limited window)
+      const maxVisible = 5;
+      let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+      let endPage = Math.min(totalPages, startPage + maxVisible - 1);
+      if (endPage - startPage + 1 < maxVisible)
+        startPage = Math.max(1, endPage - maxVisible + 1);
+
+      if (startPage > 1) {
+        addPageItem(ul, 1);
+        if (startPage > 2) addEllipsis(ul);
+      }
+
+      for (let i = startPage; i <= endPage; i++) addPageItem(ul, i);
+
+      if (endPage < totalPages) {
+        if (endPage < totalPages - 1) addEllipsis(ul);
+        addPageItem(ul, totalPages);
+      }
+
+      // Next
+      const nextLi = document.createElement("li");
+      nextLi.className = `page-item ${currentPage === totalPages ? "disabled" : ""}`;
+      nextLi.innerHTML = `<a class="page-link" href="#" aria-label="Trang sau"><i class="bi bi-chevron-right"></i></a>`;
+      nextLi.addEventListener("click", (e) => {
+        e.preventDefault();
+        if (currentPage < totalPages) goToPage(currentPage + 1);
+      });
+      ul.appendChild(nextLi);
+    }
+
+    function addPageItem(ul, page) {
+      const li = document.createElement("li");
+      li.className = `page-item ${page === state.currentPage ? "active" : ""}`;
+      li.innerHTML = `<a class="page-link" href="#">${page}</a>`;
+      li.addEventListener("click", (e) => {
+        e.preventDefault();
+        goToPage(page);
+      });
+      ul.appendChild(li);
+    }
+
+    function addEllipsis(ul) {
+      const li = document.createElement("li");
+      li.className = "page-item disabled";
+      li.innerHTML = `<span class="page-link">…</span>`;
+      ul.appendChild(li);
+    }
+
+    function goToPage(page) {
+      state.currentPage = page;
+      renderTable();
+      renderPagination();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    // ==================== SORT ====================
+    function setupSort() {
+      document
+        .getElementById("sortTitle")
+        .addEventListener("click", () => toggleSort("title"));
+      document
+        .getElementById("sortPrice")
+        .addEventListener("click", () => toggleSort("price"));
+    }
+
+    function toggleSort(field) {
+      if (state.sortField !== field) {
+        state.sortField = field;
+        state.sortDir = "asc";
+      } else if (state.sortDir === "asc") {
+        state.sortDir = "desc";
+      } else if (state.sortDir === "desc") {
+        state.sortField = null;
+        state.sortDir = null;
+      }
+      updateSortIcons();
+      applyFilters();
+    }
+
+    function updateSortIcons() {
+      const fields = ["title", "price"];
+      fields.forEach((f) => {
+        const icon = document.getElementById(
+          `sort${f.charAt(0).toUpperCase() + f.slice(1)}Icon`,
+        );
+        const th = document.getElementById(
+          `sort${f.charAt(0).toUpperCase() + f.slice(1)}`,
+        );
+        icon.innerHTML = "";
+        th.classList.remove("sort-asc", "sort-desc");
+        if (state.sortField === f) {
+          if (state.sortDir === "asc") {
+            icon.innerHTML = '<i class="bi bi-sort-up"></i>';
+            th.classList.add("sort-asc");
+          } else if (state.sortDir === "desc") {
+            icon.innerHTML = '<i class="bi bi-sort-down"></i>';
+            th.classList.add("sort-desc");
+          }
+        } else {
+          icon.innerHTML = '<i class="bi bi-arrow-down-up opacity-50"></i>';
+        }
+      });
+    }
+
+    // ==================== CATEGORY FILTER ====================
+    function populateCategoryFilter(products) {
+      const map = new Map();
+      products.forEach((p) => {
+        if (p.category) map.set(p.category.id, p.category.name);
+      });
+      const select = document.getElementById("categoryFilter");
+      map.forEach((name, id) => {
+        const opt = document.createElement("option");
+        opt.value = id;
+        opt.textContent = name;
+        select.appendChild(opt);
+      });
+    }
+
+    // ==================== HELPERS ====================
+    // API sometimes returns images as: ["https://..."] or ["\"https://...\""]
+    function getProductImage(product) {
+      if (
+        !product.images ||
+        !Array.isArray(product.images) ||
+        product.images.length === 0
+      ) {
+        return "https://placehold.co/60x60/1a1a2e/7c3aed?text=No+Img";
+      }
+
+      let imgVal = product.images[0];
+
+      // Case: element itself is a JSON-stringified array e.g. '["https://..."]'
+      if (typeof imgVal === "string" && imgVal.trim().startsWith("[")) {
+        try {
+          const parsed = JSON.parse(imgVal);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            imgVal = parsed[0];
+          }
+        } catch (e) {
+          imgVal = imgVal.replace(/^\[["']?|["']?\]$/g, "");
+        }
+      }
+
+      // Strip any remaining surrounding quotes and escaped quotes
+      let url = String(imgVal)
+        .trim()
+        .replace(/^["']|["']$/g, "")
+        .replace(/\\"/g, "")
+        .trim();
+
+      if (!url.startsWith("http")) {
+        return "https://placehold.co/60x60/1a1a2e/7c3aed?text=No+Img";
+      }
+      return url;
+    }
+
+    function cleanImageUrl(url) {
+      return url;
+    }
+
+    function escapeHtml(str) {
+      if (!str) return "";
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    function showLoading(show) {
+      document
+        .getElementById("loadingSpinner")
+        .classList.toggle("d-none", !show);
+      document
+        .getElementById("tableWrapper")
+        .classList.toggle("d-none", show);
+    }
+
+    function showError(msg) {
+      const el = document.getElementById("errorAlert");
+      document.getElementById("errorMsg").textContent = msg;
+      el.classList.remove("d-none");
+      document.getElementById("loadingSpinner").classList.add("d-none");
+    }
+
+    function resetFilters() {
+      document.getElementById("searchInput").value = "";
+      document.getElementById("categoryFilter").value = "";
+      state.searchQuery = "";
+      state.categoryFilter = "";
+      state.sortField = null;
+      state.sortDir = null;
+      updateSortIcons();
+      applyFilters();
+    }
+
+    // ==================== EVENT LISTENERS ====================
+    function setupEvents() {
+      // Search onChange
+      document
+        .getElementById("searchInput")
+        .addEventListener("input", (e) => {
+          state.searchQuery = e.target.value.trim();
+          state.currentPage = 1;
+          applyFilters();
+        });
+
+      // Clear search
+      document.getElementById("clearSearch").addEventListener("click", () => {
+        document.getElementById("searchInput").value = "";
+        state.searchQuery = "";
+        applyFilters();
+      });
+
+      // Category filter
+      document
+        .getElementById("categoryFilter")
+        .addEventListener("change", (e) => {
+          state.categoryFilter = e.target.value;
+          state.currentPage = 1;
+          applyFilters();
+        });
+
+      // Limit select
+      document
+        .getElementById("limitSelect")
+        .addEventListener("change", (e) => {
+          state.limit = parseInt(e.target.value);
+          state.currentPage = 1;
+          applyFilters();
+        });
+
+      setupSort();
+    }
+
+    // ==================== INIT ====================
+    document.addEventListener("DOMContentLoaded", () => {
+      setupEvents();
+      fetchProducts();
+    });
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>
